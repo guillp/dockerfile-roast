@@ -550,6 +550,7 @@ droast completion fish | source
   DF086    ERROR    correctness,reliability            Declare ARG variables used by FROM before the first FROM
   DF087    ERROR    correctness,reliability            Declare Dockerfile variables before using them
   DF088    ERROR    correctness,reliability            Use valid characters in LABEL keys
+  DF089    WARN     correctness,reliability            Do not copy an entire filesystem from another stage
 
   Use --skip DF001,DF002 to suppress specific rules.
   Use --min-severity warning to hide INFO findings.

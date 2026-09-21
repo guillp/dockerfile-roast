@@ -87,7 +87,7 @@ pub fn categories_for(id: &str) -> &'static [&'static str] {
         "DF072" | "DF074" => &["correctness", "security"],
         "DF075" => &["correctness", "reliability"],
         "DF076" | "DF077" | "DF078" | "DF079" | "DF082" | "DF084" | "DF085" | "DF086" | "DF087"
-        | "DF088" => &["correctness", "reliability"],
+        | "DF088" | "DF089" => &["correctness", "reliability"],
         "DF083" => &["correctness", "reproducibility"],
         _ => &[],
     }
@@ -610,6 +610,12 @@ pub fn all_rules() -> Vec<Rule> {
             severity: Severity::Error,
             description: "Use valid characters in LABEL keys",
             func: rule_label_key_characters,
+        },
+        Rule {
+            id: "DF089",
+            severity: Severity::Warning,
+            description: "Do not copy an entire filesystem from another stage",
+            func: rule_copy_entire_filesystem,
         },
     ]
 }
@@ -1740,6 +1746,29 @@ fn rule_copy_all(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {
         });
     }
     findings
+}
+
+fn rule_copy_entire_filesystem(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {
+    instrs_of(instrs, "COPY")
+        .into_iter()
+        .filter(|instruction| {
+            instruction
+                .flags
+                .iter()
+                .any(|flag| flag.name.eq_ignore_ascii_case("from"))
+                && matches!(instruction_operands(instruction).first(), Some(&"/" | &"/."))
+        })
+        .map(|instruction| Finding {
+            column: 0,
+            end_line: 0,
+            end_column: 0,
+            rule: "DF089".into(),
+            severity: Severity::Warning,
+            line: instruction.line,
+            message: "COPY --from copies the entire source filesystem".to_string(),
+            roast: "Copying an entire image filesystem will bring more crap than you probably want. Bring over only the paths the final image actually needs.".to_string(),
+        })
+        .collect()
 }
 
 fn rule_cd_instead_of_workdir(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {

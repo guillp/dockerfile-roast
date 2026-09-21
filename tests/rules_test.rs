@@ -336,6 +336,26 @@ fn df007_clear_on_specific_copy() {
     assert!(no_rule(&lint(df), "DF007"));
 }
 
+// ─── DF089: copy entire filesystem from another stage ───────────────────────
+
+#[test]
+fn df089_fires_on_copying_an_entire_stage_filesystem() {
+    let df = "FROM alpine:3.20 AS build\nRUN echo build\nFROM alpine:3.20\nCOPY --from=build / /\n";
+    assert!(has_rule(&lint(df), "DF089"));
+}
+
+#[test]
+fn df089_fires_on_copying_an_entire_external_image_filesystem() {
+    let df = "FROM alpine:3.20\nCOPY --from=busybox:1.36 / /.\n";
+    assert!(has_rule(&lint(df), "DF089"));
+}
+
+#[test]
+fn df089_clear_on_copying_a_specific_path() {
+    let df = "FROM alpine:3.20 AS build\nRUN echo build\nFROM alpine:3.20\nCOPY --from=build /app /app\n";
+    assert!(no_rule(&lint(df), "DF089"));
+}
+
 // ─── DF009: relative WORKDIR ─────────────────────────────────────────────────
 
 #[test]
