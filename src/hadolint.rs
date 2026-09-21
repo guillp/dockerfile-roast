@@ -196,6 +196,7 @@ pub(crate) fn aliases(rule: &str) -> Option<&'static [&'static str]> {
         "DL3046" => Some(&["DF064"]),
         "DL3047" => Some(&["DF056"]),
         "DL3048" => Some(&["DF088"]),
+        "DL3057" => Some(&["DF012"]),
         "DL3059" => Some(&["DF003"]),
         "DL3060" => Some(&["DF055"]),
         "DL3061" => Some(&["DF037"]),
