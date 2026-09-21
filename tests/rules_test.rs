@@ -2758,6 +2758,12 @@ fn df084_is_a_warning_for_the_reserved_scratch_alias() {
 }
 
 #[test]
+fn df084_is_a_warning_for_the_reserved_context_alias() {
+    let findings = lint("FROM alpine:3.20 AS context\nCOPY app /app\n");
+    assert_eq!(finding(&findings, "DF084").severity, Severity::Warning);
+}
+
+#[test]
 fn docker_variable_checks_distinguish_declared_and_undefined_variables() {
     let findings = lint("ARG TAG=3.20\nFROM scratch AS build\nCOPY ${MISSING} /app/\n");
     assert!(no_rule(&findings, "DF086"));

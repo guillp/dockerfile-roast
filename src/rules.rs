@@ -865,9 +865,9 @@ fn rule_redundant_target_platform(instrs: &[Instruction], _raw: &str) -> Vec<Fin
 fn rule_reserved_stage_name(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {
     instrs_of(instrs, "FROM").into_iter().filter_map(|instruction| {
         let alias = parse_from_arguments(&instruction.arguments)?.alias?;
-        (alias.eq_ignore_ascii_case("scratch")).then(|| instruction.words.iter().find(|word| word.value == alias).map(|word|
-            finding_at_span("DF084", Severity::Warning, word.span, "Stage name 'scratch' is reserved".into(),
-                "Calling a stage scratch can confuse readers with Docker's special empty image. Use a descriptive stage name."))).flatten()
+        (alias.eq_ignore_ascii_case("scratch") || alias.eq_ignore_ascii_case("context")).then(|| instruction.words.iter().find(|word| word.value == alias).map(|word|
+            finding_at_span("DF084", Severity::Warning, word.span, format!("Stage name '{alias}' is reserved"),
+                "Stage names 'scratch' and 'context' are reserved in Docker. Use a descriptive stage name."))).flatten()
     }).collect()
 }
 
