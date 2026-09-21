@@ -2768,6 +2768,27 @@ fn docker_variable_checks_distinguish_declared_and_undefined_variables() {
 }
 
 #[test]
+fn df088_accepts_allowed_label_key_characters() {
+    let df = "FROM alpine:3.20\nLABEL org.example/app_name-v1=value plain.key=value\n";
+    assert!(no_rule(&lint(df), "DF088"));
+}
+
+#[test]
+fn df088_fires_on_invalid_label_key_characters() {
+    let df =
+        "FROM alpine:3.20\nLABEL org.example/app_name-v1=value LABEL +?not..valid--key=\"foo\"\n";
+    assert!(has_rule(&lint(df), "DF088"));
+}
+
+#[test]
+fn df088_checks_legacy_label_keys_without_treating_value_as_a_key() {
+    let valid = "FROM alpine:3.20\nLABEL org.example/title \"A label value\"\n";
+    let invalid = "FROM alpine:3.20\nLABEL org.example:title \"A label value\"\n";
+    assert!(no_rule(&lint(valid), "DF088"));
+    assert!(has_rule(&lint(invalid), "DF088"));
+}
+
+#[test]
 fn df087_accounts_for_named_stage_and_unknown_external_base_environment() {
     let inherited = "FROM scratch AS base\nENV APP_ROOT=/app\nFROM base\nCOPY app ${APP_ROOT}/\n";
     let external = "FROM public.example/runtime:1\nCOPY app ${RUNTIME_ROOT}/\n";

@@ -549,6 +549,7 @@ droast completion fish | source
   DF085    WARN     correctness,reliability            Use lowercase multi-stage build names
   DF086    ERROR    correctness,reliability            Declare ARG variables used by FROM before the first FROM
   DF087    ERROR    correctness,reliability            Declare Dockerfile variables before using them
+  DF088    ERROR    correctness,reliability            Use valid characters in LABEL keys
 
   Use --skip DF001,DF002 to suppress specific rules.
   Use --min-severity warning to hide INFO findings.

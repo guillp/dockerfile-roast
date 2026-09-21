@@ -86,9 +86,8 @@ pub fn categories_for(id: &str) -> &'static [&'static str] {
         }
         "DF072" | "DF074" => &["correctness", "security"],
         "DF075" => &["correctness", "reliability"],
-        "DF076" | "DF077" | "DF078" | "DF079" | "DF082" | "DF084" | "DF085" | "DF086" | "DF087" => {
-            &["correctness", "reliability"]
-        }
+        "DF076" | "DF077" | "DF078" | "DF079" | "DF082" | "DF084" | "DF085" | "DF086" | "DF087"
+        | "DF088" => &["correctness", "reliability"],
         "DF083" => &["correctness", "reproducibility"],
         _ => &[],
     }
@@ -606,6 +605,12 @@ pub fn all_rules() -> Vec<Rule> {
             description: "Declare Dockerfile variables before using them",
             func: rule_undefined_variable,
         },
+        Rule {
+            id: "DF088",
+            severity: Severity::Error,
+            description: "Use valid characters in LABEL keys",
+            func: rule_label_key_characters,
+        },
     ]
 }
 
@@ -788,6 +793,47 @@ fn rule_legacy_key_value_format(instrs: &[Instruction], _raw: &str) -> Vec<Findi
                     format!("{} uses legacy space-separated key/value syntax", instruction.instruction),
                     "Space-separated ENV and LABEL values are vintage Dockerfile syntax. Use key=value before it starts growing sideburns."))
         }).collect()
+}
+
+fn rule_label_key_characters(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {
+    instrs_of(instrs, "LABEL")
+        .into_iter()
+        .flat_map(|instruction| {
+            let modern_syntax = instruction.words.iter().any(|word| word.value.contains('='));
+            let keys = if modern_syntax {
+                instruction
+                    .words
+                    .iter()
+                    .filter_map(|word| word.value.split_once('=').map(|(key, _)| (key, word)))
+                    .collect::<Vec<_>>()
+            } else {
+                instruction
+                    .words
+                    .first()
+                    .map(|word| vec![(word.value.as_str(), word)])
+                    .unwrap_or_default()
+            };
+
+            keys.into_iter()
+                .filter(|(key, _)| {
+                    key.is_empty()
+                        || !key.bytes().all(|byte| {
+                            byte.is_ascii_alphanumeric()
+                                || matches!(byte, b'.' | b'_' | b'/' | b'-')
+                        })
+                })
+                .map(|(key, word)| {
+                    finding_at_span(
+                        "DF088",
+                        Severity::Error,
+                        word.span,
+                        format!("LABEL key '{key}' contains invalid characters"),
+                        "Label keys are not a junk drawer. Use only letters, numbers, '.', '_', '/', and '-'.",
+                    )
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect()
 }
 
 fn rule_redundant_target_platform(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {
