@@ -297,7 +297,7 @@ pub fn all_rules() -> Vec<Rule> {
         Rule {
             id: "DF027",
             severity: Severity::Error,
-            description: "Do not use yum without -y flag",
+            description: "Do not use yum or dnf without -y flag",
             func: rule_yum_no_y,
         },
         Rule {

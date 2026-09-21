@@ -1157,6 +1157,18 @@ fn df027_clear_on_yum_with_y() {
     assert!(no_rule(&lint(df), "DF027"));
 }
 
+#[test]
+fn df027_fires_on_dnf_without_y() {
+    let df = "FROM fedora:40\nRUN dnf install curl\n";
+    assert!(has_rule(&lint(df), "DF027"));
+}
+
+#[test]
+fn df027_clear_on_dnf_with_y() {
+    let df = "FROM fedora:40\nRUN dnf install -y curl\n";
+    assert!(no_rule(&lint(df), "DF027"));
+}
+
 // ─── DF029: apk add without --no-cache ───────────────────────────────────────
 
 #[test]
