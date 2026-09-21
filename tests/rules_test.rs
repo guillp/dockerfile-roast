@@ -356,6 +356,38 @@ fn df089_clear_on_copying_a_specific_path() {
     assert!(no_rule(&lint(df), "DF089"));
 }
 
+// ─── DF090: use SHELL instead of replacing /bin/sh ──────────────────────────
+
+#[test]
+fn df090_fires_when_run_replaces_the_default_shell() {
+    let df = "FROM alpine:3.20\nRUN apk add --no-cache bash\nRUN ln -sfv /bin/bash /bin/sh\n";
+    assert!(has_rule(&lint(df), "DF090"));
+}
+
+#[test]
+fn df090_accepts_long_symbolic_link_flags() {
+    let df = "FROM alpine:3.20\nRUN ln --symbolic --force /bin/bash /bin/sh\n";
+    assert!(has_rule(&lint(df), "DF090"));
+}
+
+#[test]
+fn df090_fires_regardless_of_the_link_source() {
+    let df = "FROM alpine:3.20\nRUN ln -s /opt/custom-shell /bin/sh\n";
+    assert!(has_rule(&lint(df), "DF090"));
+}
+
+#[test]
+fn df090_does_not_require_a_symbolic_link_flag() {
+    let df = "FROM alpine:3.20\nRUN ln -f /opt/custom-shell /bin/sh\n";
+    assert!(has_rule(&lint(df), "DF090"));
+}
+
+#[test]
+fn df090_clear_when_using_shell_or_installing_bash() {
+    let df = "FROM alpine:3.20\nRUN apk add --no-cache bash\nSHELL [\"/bin/bash\", \"-c\"]\nRUN echo ok\n";
+    assert!(no_rule(&lint(df), "DF090"));
+}
+
 // ─── DF009: relative WORKDIR ─────────────────────────────────────────────────
 
 #[test]

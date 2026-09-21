@@ -87,7 +87,7 @@ pub fn categories_for(id: &str) -> &'static [&'static str] {
         "DF072" | "DF074" => &["correctness", "security"],
         "DF075" => &["correctness", "reliability"],
         "DF076" | "DF077" | "DF078" | "DF079" | "DF082" | "DF084" | "DF085" | "DF086" | "DF087"
-        | "DF088" | "DF089" => &["correctness", "reliability"],
+        | "DF088" | "DF089" | "DF090" => &["correctness", "reliability"],
         "DF083" => &["correctness", "reproducibility"],
         _ => &[],
     }
@@ -616,6 +616,12 @@ pub fn all_rules() -> Vec<Rule> {
             severity: Severity::Warning,
             description: "Do not copy an entire filesystem from another stage",
             func: rule_copy_entire_filesystem,
+        },
+        Rule {
+            id: "DF090",
+            severity: Severity::Warning,
+            description: "Use SHELL instead of replacing /bin/sh",
+            func: rule_shell_overwrite,
         },
     ]
 }
@@ -1769,6 +1775,52 @@ fn rule_copy_entire_filesystem(instrs: &[Instruction], _raw: &str) -> Vec<Findin
             roast: "Copying an entire image filesystem will bring more crap than you probably want. Bring over only the paths the final image actually needs.".to_string(),
         })
         .collect()
+}
+
+fn rule_shell_overwrite(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {
+    instrs_of(instrs, "RUN")
+        .into_iter()
+        .filter(|instruction| {
+            instruction
+                .arguments
+                .split([';', '&', '|'])
+                .any(shell_overwrite_command)
+        })
+        .map(|instruction| Finding {
+            column: 0,
+            end_line: 0,
+            end_column: 0,
+            rule: "DF090".into(),
+            severity: Severity::Warning,
+            line: instruction.line,
+            message: "Use SHELL to change the default shell instead of replacing /bin/sh".to_string(),
+            roast: "You think overwriting /bin/sh to change Docker's default shell is a clever hack... but it's not. Use the built-in SHELL command, that's what it's there for.".to_string(),
+        })
+        .collect()
+}
+
+fn shell_overwrite_command(command: &str) -> bool {
+    let tokens = command.split_whitespace().collect::<Vec<_>>();
+    let Some(ln_index) = tokens.iter().position(|token| {
+        let command = token.trim_matches(['\'', '"']);
+        command == "ln" || command.ends_with("/ln")
+    }) else {
+        return false;
+    };
+
+    let mut operands = Vec::new();
+    for token in tokens.into_iter().skip(ln_index + 1) {
+        let token = token.trim_matches(['\'', '"']);
+        if token.starts_with('-') && operands.is_empty() {
+            continue;
+        }
+        operands.push(token);
+        if operands.len() == 2 {
+            break;
+        }
+    }
+
+    operands.len() == 2 && operands[1] == "/bin/sh"
 }
 
 fn rule_cd_instead_of_workdir(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {

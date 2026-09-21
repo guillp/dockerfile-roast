@@ -551,6 +551,7 @@ droast completion fish | source
   DF087    ERROR    correctness,reliability            Declare Dockerfile variables before using them
   DF088    ERROR    correctness,reliability            Use valid characters in LABEL keys
   DF089    WARN     correctness,reliability            Do not copy an entire filesystem from another stage
+  DF090    WARN     correctness,reliability            Use SHELL instead of replacing /bin/sh
 
   Use --skip DF001,DF002 to suppress specific rules.
   Use --min-severity warning to hide INFO findings.
