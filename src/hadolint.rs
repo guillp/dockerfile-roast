@@ -156,6 +156,7 @@ fn apply_rule(
 pub(crate) fn aliases(rule: &str) -> Option<&'static [&'static str]> {
     match rule.to_ascii_uppercase().as_str() {
         "DL1000" => Some(&["DF071"]),
+        "DL1001" => Some(&["DF091"]),
         "DL3000" => Some(&["DF009"]),
         "DL3001" => Some(&["DF060"]),
         "DL3002" => Some(&["DF002"]),

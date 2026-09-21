@@ -388,6 +388,26 @@ fn df090_clear_when_using_shell_or_installing_bash() {
     assert!(no_rule(&lint(df), "DF090"));
 }
 
+// ─── DF091: Hadolint ignore comments ────────────────────────────────────────
+
+#[test]
+fn df091_fires_on_hadolint_ignore_comment() {
+    let df = "# hadolint ignore=DL3007\nFROM ubuntu:latest\n";
+    assert!(has_rule(&lint(df), "DF091"));
+}
+
+#[test]
+fn df091_accepts_spacing_and_case_variations() {
+    let df = "  # HADOLINT  IGNORE = DL3007,DL3008\nFROM alpine:3.20\n";
+    assert!(has_rule(&lint(df), "DF091"));
+}
+
+#[test]
+fn df091_ignores_other_comments_and_droast_suppressions() {
+    let df = "# ordinary comment\n# droast ignore=DF001\nFROM alpine:3.20\n";
+    assert!(no_rule(&lint(df), "DF091"));
+}
+
 // ─── DF009: relative WORKDIR ─────────────────────────────────────────────────
 
 #[test]

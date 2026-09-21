@@ -87,7 +87,7 @@ pub fn categories_for(id: &str) -> &'static [&'static str] {
         "DF072" | "DF074" => &["correctness", "security"],
         "DF075" => &["correctness", "reliability"],
         "DF076" | "DF077" | "DF078" | "DF079" | "DF082" | "DF084" | "DF085" | "DF086" | "DF087"
-        | "DF088" | "DF089" | "DF090" => &["correctness", "reliability"],
+        | "DF088" | "DF089" | "DF090" | "DF091" => &["correctness", "reliability"],
         "DF083" => &["correctness", "reproducibility"],
         _ => &[],
     }
@@ -622,6 +622,12 @@ pub fn all_rules() -> Vec<Rule> {
             severity: Severity::Warning,
             description: "Use SHELL instead of replacing /bin/sh",
             func: rule_shell_overwrite,
+        },
+        Rule {
+            id: "DF091",
+            severity: Severity::Warning,
+            description: "Avoid Hadolint ignore comments",
+            func: rule_hadolint_ignore_pragma,
         },
     ]
 }
@@ -1795,6 +1801,24 @@ fn rule_shell_overwrite(instrs: &[Instruction], _raw: &str) -> Vec<Finding> {
             line: instruction.line,
             message: "Use SHELL to change the default shell instead of replacing /bin/sh".to_string(),
             roast: "You think overwriting /bin/sh to change Docker's default shell is a clever hack... but it's not. Use the built-in SHELL command, that's what it's there for.".to_string(),
+        })
+        .collect()
+}
+
+fn rule_hadolint_ignore_pragma(_instrs: &[Instruction], raw: &str) -> Vec<Finding> {
+    let directive = Regex::new(r"(?i)^\s*#\s*hadolint\s+ignore\s*=\s*\S+").unwrap();
+    raw.lines()
+        .enumerate()
+        .filter(|(_, line)| directive.is_match(line))
+        .map(|(line_index, _)| Finding {
+            column: 0,
+            end_line: 0,
+            end_column: 0,
+            rule: "DF091".into(),
+            severity: Severity::Warning,
+            line: line_index + 1,
+            message: "Hadolint ignore comment suppresses a lint rule".to_string(),
+            roast: "A Hadolint ignore comment makes the warning disappear from view, but it does not make it less true. Fix the Dockerfile or document the exception through the project's lint policy.".to_string(),
         })
         .collect()
 }

@@ -552,6 +552,7 @@ droast completion fish | source
   DF088    ERROR    correctness,reliability            Use valid characters in LABEL keys
   DF089    WARN     correctness,reliability            Do not copy an entire filesystem from another stage
   DF090    WARN     correctness,reliability            Use SHELL instead of replacing /bin/sh
+  DF091    WARN     correctness,reliability            Avoid using Hadolint ignore comments
 
   Use --skip DF001,DF002 to suppress specific rules.
   Use --min-severity warning to hide INFO findings.
